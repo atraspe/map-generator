@@ -4,6 +4,9 @@ from openpyxl import load_workbook
 # Import deque from collections module in order to store rules for the source model (queue data structure)
 from collections import deque
 
+# Import Path to work with files
+from pathlib import Path
+
 # Load entire spreadsheet/workbook into this object
 wb = load_workbook('Example_Spec_v1.0.xlsx')
 
@@ -32,8 +35,8 @@ for i in range(2, 11):
         
 
 map_name = client_id + dir_io + str(doc_type) + str(doc_version) + s_or_t + '.mdl'
-# print(f'Map Name: {map_name}')
-
+new_map = Path(map_name)
+print(f'Map file exists?: {new_map.exists()}')
 
 # Obtain information from UDF (User-Defined Format) sheet
 udf_sheet = wb['UDF']
@@ -50,7 +53,6 @@ def get_cell_value(sheet, row, col):
 all_UDF_rows = (
     (get_cell_value(udf_sheet, i, j) for j in range(1, udf_max_col + 1)) for i in range(2, udf_max_row + 1)
     )
-
 
 
 # How information from each row will be parsed:
@@ -134,19 +136,33 @@ class DataModelItem():
             self.occ_max = list(parent_items[-1].values())[0][1]['Occ Max']
 
 
-    def generate_item(self):
-        # This function will, you guessed it right, generate the data model item
-        # The beginning of the item will be generated, but will wait for the next iteration (next item)
-        #   to determine if it'll close this item (build the trailer) or build the next one
-        global parent_items, closing_loops
+    def parse_item(self):
+        # This function will prepare some values prior to calling a private method _generate_item()
+
+        # Determine data model item name to be used
+        dmi_name = self.loop_rec_name if self.type in flr_list else self.field_name
 
         format = f'"{self.format}"' if self.format else ''
-        length_min_max = f' @{self.length} .. {self.length}'
+        length = f' @{self.length} .. {self.length}'
+
+        generated_item = self._generate_item(dmi_name, format, length)
+        map_file.write(generated_item)
+
+        if self.type != 'RC':
+            # If type is 'RC", the expectation is that next item will be a 'RT' (Record Tag)
+            # so next iteration would just write the value from Correlation column of the specs
+            map_file.write('\n')
+        
+
+    def _generate_item(self, dmi_name, format, length_min_max):
+        # The beginning of the item will be generated, but will wait for the next iteration (next item)
+        #   to determine if it'll close this item (build the trailer) or build the next one (if it's a child of this current item)
+        global parent_items, closing_loops
 
         # A lambda to construct data model item's leading part
         #   - 1st parameter is a boolean value to determine if it's a parent
         #   - 2nd parameter is the data model item name
-        item_leading = lambda parent, dmi_name : f"{dmi_name} {opening_bracket} {flr_dict[self.type] if parent else flf_dict[self.type]}{'' if parent else length_min_max}{'' if parent else format} {'' if parent else 'none'}"
+        item_leading = lambda parent, dmi_name : f'{dmi_name} {opening_bracket} {flr_dict[self.type] if parent else flf_dict[self.type]}{"" if parent else length_min_max}{"" if parent else format} {"" if parent else "none"}'
 
         # A lambda to construct data model item's trailing part
         item_trailing = lambda dmi_name : f'{closing_bracket}*{self.occ_min} .. {self.occ_max} ;; |-- end {dmi_name} --|'
@@ -156,10 +172,8 @@ class DataModelItem():
 
         if self.type in data_model_item_type:
             if self.type == 'RT':
+                # If it's a Record Tag, just return the value
                 return self.correlation
-
-            # Determine data model item name to be used
-            dmi_name = self.loop_rec_name if self.type in flr_list else self.field_name
             
             # Check first if need to close out prior data model item, that is if:
             #   a) current item is a sibling of previous item, or
@@ -169,18 +183,19 @@ class DataModelItem():
                 # Current item is a fixed length field and previous is also a field, OR
                 # Current item is a Group (LS) or start of another record (RE), then
                 # 1) Close out the previous item's trailing
-                print(closing_loops.pop())
+                map_file.write(f'{closing_loops.pop()}\n')
                 
             if self.type in flr_list and prev_item_type in flf_list:
                 # Current item is a Group (LS) or start of another record (RE), then
                 # 1) Write all the mapping rules in the PRESENT section of parent item
                 mapping_rules = list(parent_items[-1].values())[-1][2]["Rules"]
-                print('[ ]')
+                map_file.write('[ ]\n')
+
                 while mapping_rules:
-                    print(f'{mapping_rules.popleft()}')
+                    map_file.write(f'{mapping_rules.popleft()}\n')
 
                 # 2) Close out the previous item's trailing (essentially closing out the last parent item)
-                print(closing_loops.pop())
+                map_file.write(f'{closing_loops.pop()}\n')
 
                 # 3) Pop the last item in parent_items list (take off from the list)
                 parent_items.pop()
@@ -189,7 +204,6 @@ class DataModelItem():
             # Save the current item's trailing
             closing_loops.append(item_trailing(dmi_name))
 
-            
             if self.type == 'LS' or self.type == 'RC':
                 # 'LS (Loop Start)' and 'RC (Record)' will be treated as parent items
                 # Save data model item in parent_items
@@ -206,7 +220,7 @@ class DataModelItem():
             if self.type == 'LE':
                 loop_end = dmi_name[4:]
                 last_parent = list(parent_items[-1].keys())[-1]
-                # print(f'{loop_end}\n{last_parent}')
+
                 if loop_end.lower() == last_parent.lower():
                     # Pop the last item in parent_items list
                     parent_items.pop()
@@ -222,20 +236,15 @@ class DataModelItem():
         else:
             return 'Invalid Data Model Item Type!'
 
+# Create the map
+with open(new_map, 'w', newline=None) as map_file:
+    for attributes in all_UDF_rows:
+        # Convert each row's attributes into a tuple and pass to the DataModelItem class in an expected order
+        new_DMI = DataModelItem(tuple(attributes))
+        new_DMI.parse_item()
+                
+        # Save current data model item type for comparison with the next item
+        prev_item_type = new_DMI.type
 
-for attributes in all_UDF_rows:
-    # Convert each row's attributes into a tuple and pass to the DataModelItem class in an expected order
-    new_DMI = DataModelItem(tuple(attributes))
-    
-    if new_DMI.type == 'RC':
-        # If type is 'RC", the expectation is that next item will be a 'RT' (Record Tag)
-        # so next iteration would just write the value from Correlation column of the specs
-        print(new_DMI.generate_item(), end='')
-    else:
-        print(new_DMI.generate_item())
-    
-    # Save current data model item type for comparison with the next item
-    prev_item_type = new_DMI.type
-
-    # Delete current object prior to next loop iteration
-    del new_DMI
+        # Delete current object prior to next loop iteration
+        del new_DMI
