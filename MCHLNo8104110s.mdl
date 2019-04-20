@@ -1,0 +1,111 @@
+Initialization {  
+}*1 .. 1 ;; |-- end Initialization --|
+Document {  
+Header_Envelop { LineFeedDelimRecord "ST*"
+ST_St01 { AlphaNumericFld @3 .. 3 none
+}*1 .. 1 ;; |-- end ST_St01 --|
+ST_St02_OpenTextToAssignNumber { AlphaNumericFld @9 .. 9 none
+}*1 .. 1 ;; |-- end ST_St02_OpenTextToAssignNumber --|
+ST_Beg01_Original { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end ST_Beg01_Original --|
+ST_Beg02_StandAloneOrder { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end ST_Beg02_StandAloneOrder --|
+ST_Isa15_TestIndicator { AlphaNumericFld @1 .. 1 none
+}*0 .. 1 ;; |-- end ST_Isa15_TestIndicator --|
+[ ]
+ARRAY->ST_St01 = STRTRIM(DEFAULT_NULL(&ST_St01), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->ST_St02_OpenTextToAssignNumber = STRTRIM(DEFAULT_NULL(&ST_St02_OpenTextToAssignNumber), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->ST_Beg01_Original = STRTRIM(DEFAULT_NULL(&ST_Beg01_Original), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->ST_Beg02_StandAloneOrder = STRTRIM(DEFAULT_NULL(&ST_Beg02_StandAloneOrder), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->ST_Isa15_TestIndicator = STRTRIM(DEFAULT_NULL(&ST_Isa15_TestIndicator), VAR->TRIM_TYPE, VAR->SPACE)
+}*0 .. 1 ;; |-- end Header_Envelop --|
+Header_Record { LineFeedDelimRecord "HDR"
+HDR_Beg03 { AlphaNumericFld @9 .. 9 none
+}*1 .. 1 ;; |-- end HDR_Beg03 --|
+HDR_Beg05 { AlphaNumericFld @6 .. 6 none
+}*1 .. 1 ;; |-- end HDR_Beg05 --|
+HDR_N101_BuyingParty { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end HDR_N101_BuyingParty --|
+HDR_N102_BuyingParty { AlphaNumericFld @8 .. 8 none
+}*1 .. 1 ;; |-- end HDR_N102_BuyingParty --|
+HDR_N101_Supplier { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end HDR_N101_Supplier --|
+HDR_N102_Supplier { AlphaNumericFld @30 .. 30 none
+}*1 .. 1 ;; |-- end HDR_N102_Supplier --|
+HDR_N103_Supplier { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end HDR_N103_Supplier --|
+HDR_N104_Supplier { AlphaNumericFld @5 .. 5 none
+}*1 .. 1 ;; |-- end HDR_N104_Supplier --|
+[ ]
+ARRAY->HDR_Beg03 = STRTRIM(DEFAULT_NULL(&HDR_Beg03), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_Beg05 = STRTRIM(DEFAULT_NULL(&HDR_Beg05), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_N101_BuyingParty = STRTRIM(DEFAULT_NULL(&HDR_N101_BuyingParty), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_N102_BuyingParty = STRTRIM(DEFAULT_NULL(&HDR_N102_BuyingParty), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_N101_Supplier = STRTRIM(DEFAULT_NULL(&HDR_N101_Supplier), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_N102_Supplier = STRTRIM(DEFAULT_NULL(&HDR_N102_Supplier), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_N103_Supplier = STRTRIM(DEFAULT_NULL(&HDR_N103_Supplier), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_N104_Supplier = STRTRIM(DEFAULT_NULL(&HDR_N104_Supplier), VAR->TRIM_TYPE, VAR->SPACE)
+}*1 .. 1 ;; |-- end Header_Record --|
+Terms_Record { LineFeedDelimRecord "TER"
+TER_Itd01_TermsTypeCode { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end TER_Itd01_TermsTypeCode --|
+TER_Itd02_TermsBasisDateCode { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end TER_Itd02_TermsBasisDateCode --|
+TER_Itd03_TermsDiscountPercent { AlphaNumericFld @6 .. 6 none
+}*1 .. 1 ;; |-- end TER_Itd03_TermsDiscountPercent --|
+TER_Itd05_NbrOfDiscountDays { AlphaNumericFld @3 .. 3 none
+}*1 .. 1 ;; |-- end TER_Itd05_NbrOfDiscountDays --|
+TER_Itd07_TermsNetDays { AlphaNumericFld @3 .. 3 none
+}*1 .. 1 ;; |-- end TER_Itd07_TermsNetDays --|
+[ ]
+ARRAY->TER_Itd01_TermsTypeCode = STRTRIM(DEFAULT_NULL(&TER_Itd01_TermsTypeCode), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->TER_Itd02_TermsBasisDateCode = STRTRIM(DEFAULT_NULL(&TER_Itd02_TermsBasisDateCode), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->TER_Itd03_TermsDiscountPercent = STRTRIM(DEFAULT_NULL(&TER_Itd03_TermsDiscountPercent), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->TER_Itd05_NbrOfDiscountDays = STRTRIM(DEFAULT_NULL(&TER_Itd05_NbrOfDiscountDays), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->TER_Itd07_TermsNetDays = STRTRIM(DEFAULT_NULL(&TER_Itd07_TermsNetDays), VAR->TRIM_TYPE, VAR->SPACE)
+}*0 .. * ;; |-- end Terms_Record --|
+Line_Group {  
+Line_Record { LineFeedDelimRecord "LIN"
+LIN_Po101_LineNumber { AlphaNumericFld @3 .. 3 none
+}*1 .. 1 ;; |-- end LIN_Po101_LineNumber --|
+LIN_Po102_OrderQuantity { AlphaNumericFld @5 .. 5 none
+}*1 .. 1 ;; |-- end LIN_Po102_OrderQuantity --|
+LIN_Po103_UnitOfMeasure { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end LIN_Po103_UnitOfMeasure --|
+LIN_Po104_UnitPrice { AlphaNumericFld @8 .. 8 none
+}*1 .. 1 ;; |-- end LIN_Po104_UnitPrice --|
+[ ]
+ARRAY->LIN_Po101_LineNumber = STRTRIM(DEFAULT_NULL(&LIN_Po101_LineNumber), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->LIN_Po102_OrderQuantity = STRTRIM(DEFAULT_NULL(&LIN_Po102_OrderQuantity), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->LIN_Po103_UnitOfMeasure = STRTRIM(DEFAULT_NULL(&LIN_Po103_UnitOfMeasure), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->LIN_Po104_UnitPrice = STRTRIM(DEFAULT_NULL(&LIN_Po104_UnitPrice), VAR->TRIM_TYPE, VAR->SPACE)
+}*1 .. 1 ;; |-- end Line_Record --|
+StoreDistribution_Record { LineFeedDelimRecord "DIS"
+DIS_Sdq01_UnitOfMeasure { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end DIS_Sdq01_UnitOfMeasure --|
+DIS_Sdq02_AssignedByBuyer { AlphaNumericFld @2 .. 2 none
+}*1 .. 1 ;; |-- end DIS_Sdq02_AssignedByBuyer --|
+DIS_Sdq03_StoreNumber { AlphaNumericFld @4 .. 4 none
+}*1 .. 1 ;; |-- end DIS_Sdq03_StoreNumber --|
+DIS_Sdq04_Quantity { AlphaNumericFld @5 .. 5 none
+}*1 .. 1 ;; |-- end DIS_Sdq04_Quantity --|
+[ ]
+ARRAY->DIS_Sdq01_UnitOfMeasure = STRTRIM(DEFAULT_NULL(&DIS_Sdq01_UnitOfMeasure), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->DIS_Sdq02_AssignedByBuyer = STRTRIM(DEFAULT_NULL(&DIS_Sdq02_AssignedByBuyer), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->DIS_Sdq03_StoreNumber = STRTRIM(DEFAULT_NULL(&DIS_Sdq03_StoreNumber), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->DIS_Sdq04_Quantity = STRTRIM(DEFAULT_NULL(&DIS_Sdq04_Quantity), VAR->TRIM_TYPE, VAR->SPACE)
+}*0 .. * ;; |-- end StoreDistribution_Record --|
+}*0 .. * ;; |-- end Line_Group --|
+Trailer_Record { LineFeedDelimRecord "CT"
+CTT_Ctt01_NumberOfLines { AlphaNumericFld @5 .. 5 none
+}*1 .. 1 ;; |-- end CTT_Ctt01_NumberOfLines --|
+[ ]
+ARRAY->CTT_Ctt01_NumberOfLines = STRTRIM(DEFAULT_NULL(&CTT_Ctt01_NumberOfLines), VAR->TRIM_TYPE, VAR->SPACE)
+}*1 .. 1 ;; |-- end Trailer_Record --|
+Trailer_Envelop { LineFeedDelimRecord "SE"
+SE_Se01 { AlphaNumericFld @10 .. 10 none
+}*1 .. 1 ;; |-- end SE_Se01 --|
+[ ]
+ARRAY->SE_Se01 = STRTRIM(DEFAULT_NULL(&SE_Se01), VAR->TRIM_TYPE, VAR->SPACE)
+}*0 .. 1 ;; |-- end Trailer_Envelop --|
+}*0 .. 1 ;; |-- end Document --|
