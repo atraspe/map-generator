@@ -7,6 +7,9 @@ from collections import deque
 # Import Path to work with files
 from pathlib import Path
 
+# For datetime stamp for header comments
+from datetime import datetime
+
 # Load entire spreadsheet/workbook into this object
 wb = load_workbook('Example_Spec_v1.0.xlsx')
 
@@ -23,13 +26,16 @@ for i in range(2, 11):
         if j == 2:
             key = title_sheet.cell(row=i, column=j-1).value.lower()
             value = title_sheet.cell(row=i, column=j).value
-            if key == 'client solution id:':
+            if key[:18] == 'client solution id':
                 client_id = value
-            if key == 'edi transaction:':
+            if key[:15] == 'trading partner':
+                tp_name = value
+            if key[:15] == 'edi transaction':
                 doc_type = value
-            if key == 'edi version:':
+            if key[:11] == 'edi version':
                 doc_version = value
-            if key == 'direction:':
+            if key[:9] == 'direction':
+                direction = value
                 dir_io = 'o' if value.lower() == 'outbound' else 'i'
                 s_or_t = 's' if value.lower() == 'outbound' else 't'
         
@@ -79,8 +85,8 @@ closing_loops = []
 # fixed_length_fields = ['RptLineFld', 'AlphaFld', 'CsvFld', 'AlphaNumericFld', 'AlphaNumericReqFld', 'DateFld', 'DateFldNA', 'TimeFld', 
 #                     'TimeFldNA', 'NumericFld', 'NumericFldNA', 'IDFld', 'AnyCharDelim', 'AnyCharDelimCRLF', 'AnyCharODelim', 
 #                     'AnyCharDelimNCR', 'AnyCharDelimCR', 'QuestionMark']
-flf_list = ['AN']
-flf_dict = {'AN' : 'AlphaNumericFld'}
+flf_list = ['AN', 'DT', 'NF', 'TF']
+flf_dict = {'AN' : 'AlphaNumericFld', 'DT' : 'DateFld', 'NF' : 'NumericFld', 'TF' : 'TimeFld'}
 
 # These are fixed-length records from OTFixed.acc
 # fixed_length_records = ['Rec_Code', 'FixedLgthRecord', 'FixedLgthDefaultRecord', 'LineFeedDelimRecord', 'LineFeedDelimDefaultRecord', 
@@ -89,7 +95,7 @@ flr_list = ['LS', 'LE', 'RC']
 flr_dict = {'LS' : '', 'LE' : '', 'RC' : 'LineFeedDelimRecord'}
 
 # These are data model item types from the specs
-data_model_item_type = ['AN', 'LE', 'LS', 'RC', 'RT']
+data_model_item_types = ['AN', 'DT', 'NF', 'LE', 'LS', 'RC', 'RT', 'TF']
 
 # Global variables which will be used by DataModelItem() class
 prev_item_type = ''
@@ -110,49 +116,112 @@ class DataModelItem():
         self.start, self.end, self.length, self.occurence, self.mapped, self.correlation, self.comments, self.spec_logic = field_tuple
         
         self.occ_min, self.occ_max = (0, 0)
-
-        # For Loop start (LS) and Record (RC) items,
-        #   the Occ value comes in as x .. y so need to separate the min(x) from the max(y)
         
         if self.type in ['LS', 'RC']:
+            # For Loop start (LS) and Record (RC) items,
+            #   the Occ value comes in as x .. y so need to separate the min(x) from the max(y)
             occ = self.occurence
             self.occ_min = occ.split('..')[0].strip()
             self.occ_max = occ.split('..')[-1].strip()
-        
-        # For Record tag (RT) and fixed-length fields (AlphaNumeric, Numeric, etc),
-        #   the Occ value comes in as M (mandatory) or O (optional)
-        
+                
         elif self.type in ['RT', 'AN']:
+            # For Record tag (RT) and fixed-length fields (AlphaNumeric, Numeric, etc),
+            #   the Occ value comes in as M (mandatory) or O (optional)
             if self.occurence == 'M':
                 self.occ_min, self.occ_max = (1, 1)
             else:
                 self.occ_min, self.occ_max = (0, 1)
-        
-        # Loop end (LE) do not have Occ value
-        #   so get their parent item's Occurence min and max values from the parent_items[]
-        
+                
         elif self.type == 'LE':
+            # Loop end (LE) do not have Occ value
+            #   so get their parent item's Occurence min and max values from the parent_items[]
             self.occ_min = list(parent_items[-1].values())[0][0]['Occ Min']
             self.occ_max = list(parent_items[-1].values())[0][1]['Occ Max']
 
 
     def parse_item(self):
         # This function will prepare some values prior to calling a private method _generate_item()
+        global item_counter
 
         # Determine data model item name to be used
         dmi_name = self.loop_rec_name if self.type in flr_list else self.field_name
 
-        format = f'"{self.format}"' if self.format else ''
+        format = f' "{self.format}"' if self.format else ''
         length = f' @{self.length} .. {self.length}'
 
         generated_item = self._generate_item(dmi_name, format, length)
         map_file.write(generated_item)
+
 
         if self.type != 'RC':
             # If type is 'RC", the expectation is that next item will be a 'RT' (Record Tag)
             # so next iteration would just write the value from Correlation column of the specs
             map_file.write('\n')
         
+        if item_counter == 0:
+            # For the first item (Initialization), map documentation header will be generated
+            header_comments = self._generate_header_comments()
+            list(parent_items[-1].values())[-1][2]["Rules"].append(header_comments)
+            mapping_rules = list(parent_items[-1].values())[-1][2]["Rules"]
+            self._write_mapping_rules(mapping_rules)
+            item_counter += 1
+
+
+    def _generate_header_comments(self):
+        global client_id, map_name, direction, doc_type, doc_version, tp_name
+
+        header_comments = f''';;
+;; o------------------------------------------------------------------------------------------o
+;; |                   Map Documentation
+;; o------------------------------------------------------------------------------------------o
+;; |         Client Name: {client_id}
+;; |             Program: {map_name}
+;; |           Direction: {direction}
+;; |            Standard: UDF
+;; |            Document: {doc_type}
+;; |             Version: {doc_version}
+;; |     Trading Partner: {tp_name}
+;; |        Developed By: floresl
+;; |      Date Developed: {datetime.now().strftime("%c")}
+;; |    Last Modified By:
+;; |  Date Last Modified:
+;; o------------------------------------------------------------------------------------------o
+
+[ ]
+VAR->NULL = ""
+VAR->TRIM_TYPE = "B"
+VAR->SPACE = " "
+VAR->DATA = "Data"
+VAR->STOP = "Stop"
+VAR->YES = "Yes"
+VAR->NO = "No"
+
+[ ]
+VAR->Workbench = VAR->YES
+VAR->Session = VAR->NULL
+VAR->Session = VAR->OTSessionNo
+
+[VAR->Session != VAR->NULL]
+VAR->Workbench = VAR->NO
+
+[VAR->Workbench == VAR->YES]
+PERFORM("OTSessionInit")
+
+[ ]
+;;; ECSC Standard Map PERFORM
+PERFORM ("ECSCOutbSourceInit")
+PERFORM ("OTAdminInit")
+'''
+        return header_comments
+
+
+
+    def _write_mapping_rules(self, mapping_rules):
+        # A simple private method to write all the mapping rules in a parent's PRESENT rules section
+        map_file.write('[ ]\n')
+        while mapping_rules:
+            map_file.write(f'{mapping_rules.popleft()}\n')
+
 
     def _generate_item(self, dmi_name, format, length_min_max):
         # The beginning of the item will be generated, but will wait for the next iteration (next item)
@@ -170,7 +239,7 @@ class DataModelItem():
         # A lambda to create the mapping rule to store field's value into ARRAY
         rule_array = lambda dmi_name : f'ARRAY->{dmi_name} = STRTRIM(DEFAULT_NULL(&{dmi_name}), VAR->TRIM_TYPE, VAR->SPACE)'
 
-        if self.type in data_model_item_type:
+        if self.type in data_model_item_types:
             if self.type == 'RT':
                 # If it's a Record Tag, just return the value
                 return self.correlation
@@ -189,10 +258,7 @@ class DataModelItem():
                 # Current item is a Group (LS) or start of another record (RE), then
                 # 1) Write all the mapping rules in the PRESENT section of parent item
                 mapping_rules = list(parent_items[-1].values())[-1][2]["Rules"]
-                map_file.write('[ ]\n')
-
-                while mapping_rules:
-                    map_file.write(f'{mapping_rules.popleft()}\n')
+                self._write_mapping_rules(mapping_rules)
 
                 # 2) Close out the previous item's trailing (essentially closing out the last parent item)
                 map_file.write(f'{closing_loops.pop()}\n')
@@ -226,7 +292,7 @@ class DataModelItem():
                     parent_items.pop()
                     # Close the item, return its trailer
                     return item_trailing(loop_end)
-            
+                            
             if self.type in flf_list:
                 # Append this data model item's map logic into the mapping logic queue
                 list(parent_items[-1].values())[-1][2]["Rules"].append(rule_array(dmi_name))
