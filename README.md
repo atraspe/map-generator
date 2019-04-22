@@ -6,11 +6,11 @@ Disclaimer: I do not have any professional background in programming nor softwar
 Python script to generate a non-EDI (Electronic Data Interchange) Standard map based on client's specifications, usually in the form of an Excel spreadsheet. The generated map will later be used/paired with an EDI map to parse (input) or generate (output) a non-EDI data. This script uses openpyxl python library.
 
 
-Script Name: map-gen.py
-Author: Art Traspe
-Date Created: April 15, 2019
-Purpose: Automate the creation of a non-EDI standard map based on a spec, which usually is in the form of an Excel spreadsheet.
+* Script Name: map-gen.py
+* Author: Art Traspe
+* Date Created: April 15, 2019
+* Purpose: Automate the creation of a non-EDI standard map (initial version) based on a spec, which usually is in the form of an Excel spreadsheet.
 
-Usage: 
+* Usage:
 
 
