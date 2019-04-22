@@ -1,3 +1,8 @@
+# Script Name: map-gen.py
+# Author: Art Traspe
+# Date Created: April 15, 2019
+# Purpose: Automate the creation of a non-EDI standard map (initial version) based on a spec, which usually is in the form of an Excel spreadsheet.
+
 # Import load_workbook from openpyxl module to handle how the maps specs is parsed (usually an Excel spreadsheet)
 from openpyxl import load_workbook
 
@@ -36,13 +41,11 @@ for i in range(2, 11):
                 doc_version = value
             if key[:9] == 'direction':
                 direction = value
-                dir_io = 'o' if value.lower() == 'outbound' else 'i'
                 s_or_t = 's' if value.lower() == 'outbound' else 't'
-        
 
-map_name = client_id + dir_io + str(doc_type) + str(doc_version) + s_or_t + '.mdl'
+
+map_name = client_id + direction[0].lower() + str(doc_type) + str(doc_version) + s_or_t + '.mdl'
 new_map = Path(map_name)
-print(f'Map file exists?: {new_map.exists()}')
 
 # Obtain information from UDF (User-Defined Format) sheet
 udf_sheet = wb['UDF']
@@ -101,9 +104,6 @@ data_model_item_types = ['AN', 'DT', 'NF', 'LE', 'LS', 'RC', 'RT', 'TF']
 prev_item_type = ''
 opening_bracket, closing_bracket = '{', '}'
 previous_occ_max, item_counter = 0, 0
-
-# This list will hold all warning and error messages during specs validation process
-warnings = []
 
 
 class DataModelItem():
@@ -301,6 +301,7 @@ PERFORM ("OTAdminInit")
 
         else:
             return 'Invalid Data Model Item Type!'
+
 
 # Create the map
 with open(new_map, 'w', newline=None) as map_file:
