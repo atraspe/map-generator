@@ -1,4 +1,47 @@
 Initialization {  
+[ ]
+;;
+;; o------------------------------------------------------------------------------------------o
+;; |                   Map Documentation
+;; o------------------------------------------------------------------------------------------o
+;; |         Client Name: MCHLN
+;; |             Program: MCHLNo8104110s.mdl
+;; |           Direction: Outbound
+;; |            Standard: UDF
+;; |            Document: 810
+;; |             Version: 4110
+;; |     Trading Partner: TESLA
+;; |        Developed By: floresl
+;; |      Date Developed: Mon Apr 22 15:19:55 2019
+;; |    Last Modified By:
+;; |  Date Last Modified:
+;; o------------------------------------------------------------------------------------------o
+
+[ ]
+VAR->NULL = ""
+VAR->TRIM_TYPE = "B"
+VAR->SPACE = " "
+VAR->DATA = "Data"
+VAR->STOP = "Stop"
+VAR->YES = "Yes"
+VAR->NO = "No"
+
+[ ]
+VAR->Workbench = VAR->YES
+VAR->Session = VAR->NULL
+VAR->Session = VAR->OTSessionNo
+
+[VAR->Session != VAR->NULL]
+VAR->Workbench = VAR->NO
+
+[VAR->Workbench == VAR->YES]
+PERFORM("OTSessionInit")
+
+[ ]
+;;; ECSC Standard Map PERFORM
+PERFORM ("ECSCOutbSourceInit")
+PERFORM ("OTAdminInit")
+
 }*1 .. 1 ;; |-- end Initialization --|
 Document {  
 Header_Envelop { LineFeedDelimRecord "ST*"
@@ -24,6 +67,8 @@ HDR_Beg03 { AlphaNumericFld @9 .. 9 none
 }*1 .. 1 ;; |-- end HDR_Beg03 --|
 HDR_Beg05 { AlphaNumericFld @6 .. 6 none
 }*1 .. 1 ;; |-- end HDR_Beg05 --|
+HDR_Date { DateFld @8 .. 8 "YYYYMMDD" none
+}*0 .. 0 ;; |-- end HDR_Date --|
 HDR_N101_BuyingParty { AlphaNumericFld @2 .. 2 none
 }*1 .. 1 ;; |-- end HDR_N101_BuyingParty --|
 HDR_N102_BuyingParty { AlphaNumericFld @8 .. 8 none
@@ -39,6 +84,7 @@ HDR_N104_Supplier { AlphaNumericFld @5 .. 5 none
 [ ]
 ARRAY->HDR_Beg03 = STRTRIM(DEFAULT_NULL(&HDR_Beg03), VAR->TRIM_TYPE, VAR->SPACE)
 ARRAY->HDR_Beg05 = STRTRIM(DEFAULT_NULL(&HDR_Beg05), VAR->TRIM_TYPE, VAR->SPACE)
+ARRAY->HDR_Date = STRTRIM(DEFAULT_NULL(&HDR_Date), VAR->TRIM_TYPE, VAR->SPACE)
 ARRAY->HDR_N101_BuyingParty = STRTRIM(DEFAULT_NULL(&HDR_N101_BuyingParty), VAR->TRIM_TYPE, VAR->SPACE)
 ARRAY->HDR_N102_BuyingParty = STRTRIM(DEFAULT_NULL(&HDR_N102_BuyingParty), VAR->TRIM_TYPE, VAR->SPACE)
 ARRAY->HDR_N101_Supplier = STRTRIM(DEFAULT_NULL(&HDR_N101_Supplier), VAR->TRIM_TYPE, VAR->SPACE)
@@ -66,8 +112,8 @@ ARRAY->TER_Itd07_TermsNetDays = STRTRIM(DEFAULT_NULL(&TER_Itd07_TermsNetDays), V
 }*0 .. * ;; |-- end Terms_Record --|
 Line_Group {  
 Line_Record { LineFeedDelimRecord "LIN"
-LIN_Po101_LineNumber { AlphaNumericFld @3 .. 3 none
-}*1 .. 1 ;; |-- end LIN_Po101_LineNumber --|
+LIN_Po101_LineNumber { NumericFld @3 .. 3 "999" none
+}*0 .. 0 ;; |-- end LIN_Po101_LineNumber --|
 LIN_Po102_OrderQuantity { AlphaNumericFld @5 .. 5 none
 }*1 .. 1 ;; |-- end LIN_Po102_OrderQuantity --|
 LIN_Po103_UnitOfMeasure { AlphaNumericFld @2 .. 2 none
